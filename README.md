@@ -609,18 +609,29 @@ first (`make swagger-ui`).
 
 `.github/workflows/` follows the other NashCom projects:
 
-| Workflow      | Runs                        | Does                                            |
-|---------------|-----------------------------|-------------------------------------------------|
-| `ci.yml`      | push and pull request       | `./test.sh`, `./build.sh`, integration test     |
-| `release.yml` | GitHub release is published | builds amd64 + arm64, attaches binaries, pushes |
+| Workflow      | Runs                                   | Does                                              |
+|---------------|----------------------------------------|---------------------------------------------------|
+| `ci.yml`      | push and pull request                  | `./test.sh`, `./build.sh`, integration test       |
+| `release.yml` | release published, or **Run workflow** | builds amd64 + arm64, pushes the multi-arch image |
 
-`ci.yml` runs the same scripts you run locally. `release.yml` attaches the
-binaries with `.sha256` files to the release and pushes a multi-arch image to
-GHCR:
+`ci.yml` runs the same scripts you run locally. `release.yml` pushes a
+multi-arch image to GHCR; what it tags depends on how it was started:
+
+| Started by              | Image tags                 | Also                                       |
+|-------------------------|----------------------------|--------------------------------------------|
+| GitHub release          | `:<version>` and `:latest` | binaries with `.sha256` files are attached |
+| **Run workflow** button | `:edge` only               | binaries stay as workflow artifacts        |
 
 ```bash
-docker pull ghcr.io/nashcom/nsh-pixelbridge:latest      # or :<version>
+docker pull ghcr.io/nashcom/nsh-pixelbridge:latest      # latest release
+docker pull ghcr.io/nashcom/nsh-pixelbridge:0.9.0       # a specific release
+docker pull ghcr.io/nashcom/nsh-pixelbridge:edge        # last manual build (moves)
 ```
+
+**Building an image without a release:** on GitHub open *Actions*, choose
+*Release and image*, then *Run workflow* and pick the branch. This is the way to
+test the pipeline or try a build before releasing it. `:edge` is a moving tag
+and never touches `:latest` or a version tag.
 
 **To release:**
 
