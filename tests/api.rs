@@ -126,6 +126,15 @@ async fn sizing_width_height_and_both() {
 }
 
 #[tokio::test]
+async fn curl_default_content_type_counts_as_unspecified() {
+    // `curl --data-binary @file` without -H sends this header.
+    let (status, _, body) =
+        call(&state(), post_binary("format=png", Some("application/x-www-form-urlencoded"), SIMPLE_SVG)).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(&body[..8], &PNG_SIGNATURE);
+}
+
+#[tokio::test]
 async fn svg_without_declared_content_type_is_detected() {
     let (status, _, body) = call(&state(), post_binary("format=png", None, SIMPLE_SVG)).await;
     assert_eq!(status, StatusCode::OK);

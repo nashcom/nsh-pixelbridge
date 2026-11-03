@@ -184,7 +184,10 @@ fn check_content_type(headers: &HeaderMap, input: &[u8]) -> Result<(), ApiError>
         .map(|v| v.split(';').next().unwrap_or("").trim().to_ascii_lowercase());
 
     let expected = match declared.as_deref() {
-        None | Some("") | Some("application/octet-stream") => None,
+        // "No declaration": the type comes from the bytes. curl sends
+        // application/x-www-form-urlencoded when --data-binary has no -H,
+        // which says nothing about the content, so it counts as unspecified.
+        None | Some("") | Some("application/octet-stream") | Some("application/x-www-form-urlencoded") => None,
         Some("image/svg+xml") => Some(InputKind::Svg),
         Some("image/png") => Some(InputKind::Png),
         Some("image/jpeg") | Some("image/jpg") => Some(InputKind::Jpeg),

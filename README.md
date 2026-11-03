@@ -173,10 +173,11 @@ falls back to its viewBox. Anything beyond the configured limits is refused
 
 The request body is the image file. The `Content-Type` header is optional; if
 present it must be `image/svg+xml`, `image/png`, `image/jpeg` or
-`application/octet-stream`, and it must agree with the bytes. The format is
-**always detected from the data**, never trusted from the header. The response
-body is the converted image, with `Content-Type`, `Content-Length`,
-`X-Image-Width` and `X-Image-Height`.
+`application/octet-stream`, and it must agree with the bytes. curl's default
+`application/x-www-form-urlencoded` (sent when `--data-binary` has no `-H`)
+counts as not given. The format is **always detected from the data**, never
+trusted from the header. The response body is the converted image, with
+`Content-Type`, `Content-Length`, `X-Image-Width` and `X-Image-Height`.
 
 ```bash
 # SVG to PNG, 512 pixels wide

@@ -65,7 +65,7 @@
       "post": {
         "operationId": "convertImage",
         "summary": "Convert or resize an image (raw bytes)",
-        "description": "Same conversion and the same query parameters as convertImageJson, but the request body is the raw image file (SVG, PNG or JPEG) and the response body is the raw converted image. The Content-Type of the request is optional; if given it must match the data. The response carries X-Image-Width and X-Image-Height headers. Clients that cannot handle binary bodies should use convertImageJson instead.",
+        "description": "Same conversion and the same query parameters as convertImageJson, but the request body is the raw image file (SVG, PNG or JPEG) and the response body is the raw converted image. The Content-Type of the request is optional; if given it must match the data (curl's default application/x-www-form-urlencoded counts as not given). The response carries X-Image-Width and X-Image-Height headers. Clients that cannot handle binary bodies should use convertImageJson instead.",
         "parameters": [
           { "$ref": "#/components/parameters/format" },
           { "$ref": "#/components/parameters/width" },

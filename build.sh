@@ -16,6 +16,16 @@ IMAGE_TAG="${IMAGE_TAG:-nsh-pixelbridge:latest}"
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 OUT="${1:-$SCRIPT_DIR/nsh-pixelbridge}"
 
+# The argument is the OUTPUT file for the binary, not a script to run next.
+# Refuse to overwrite anything that is not an earlier build output (an ELF
+# binary): a mistyped "./build.sh tests/integration_test.sh" once replaced the
+# test script with the binary.
+if [ -f "$OUT" ] && [ "$(head -c 4 "$OUT" | od -An -tx1 | tr -d ' \n')" != "7f454c46" ]; then
+    echo "ERROR: $OUT exists and is not a binary from an earlier build; refusing to overwrite it" >&2
+    echo "       (the optional argument is where the extracted binary is written)" >&2
+    exit 1
+fi
+
 docker build --progress=plain --build-arg SWAGGER_UI="${SWAGGER_UI:-embed}" -t "$IMAGE_TAG" "$SCRIPT_DIR"
 echo "built image: $IMAGE_TAG"
 
