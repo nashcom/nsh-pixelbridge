@@ -1,0 +1,32 @@
+# Cargo build output
+/target
+
+# Binary extracted by build.sh / docker/compile_alpine_static.sh
+/nsh-pixelbridge
+
+# Swagger UI files fetched by docker/fetch_swagger_ui.sh
+/swagger-ui
+
+# Local settings (copy .env.example to .env)
+.env
+
+# The original design brief; kept locally, not part of the repository
+/nsh-pixelbridge-spec.md
+
+# Output written by examples/curl-example.sh and test runs
+*.log
+*.png
+*.jpg
+!testdata/*.png
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Cargo.lock IS committed (this is an application, not a library).

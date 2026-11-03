@@ -1,0 +1,218 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NashCom PixelBridge API",
+    "version": "0.9.0",
+    "description": "Converts SVG, PNG and JPEG images to PNG or JPEG and resizes them. Input is untrusted and is rendered in memory with no file or network access. Two endpoints share one engine and the same options (query parameters): convertImageJson (the image goes in a small JSON body, the result comes back as base64; meant for AI/MCP clients) and convertImage (raw image bytes in and out; meant for curl and scripts)."
+  },
+  "paths": {
+    "/v1/image/convert-json": {
+      "post": {
+        "operationId": "convertImageJson",
+        "summary": "Convert or resize an image (JSON body, base64 result)",
+        "description": "Renders an SVG to a raster image, or converts and resizes a PNG/JPEG. The options (format, width, height, background, quality) are query parameters. The JSON body carries only the image: exactly one of 'svg' (SVG source text, not encoded) or 'data_base64' (base64 of an SVG, PNG or JPEG file). The result is returned as base64 in 'data_base64'. If only width or only height is given, the other follows the aspect ratio. If both are given, the image is fitted inside that box without distortion, so the result can be smaller than the box in one dimension. Without width and height the image keeps its own size. JPEG has no transparency: transparent areas are filled with 'background' (white by default). PNG keeps transparency unless a background color is given.",
+        "parameters": [
+          { "$ref": "#/components/parameters/format" },
+          { "$ref": "#/components/parameters/width" },
+          { "$ref": "#/components/parameters/height" },
+          { "$ref": "#/components/parameters/background" },
+          { "$ref": "#/components/parameters/quality" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConvertRequest" },
+              "examples": {
+                "svg": {
+                  "summary": "SVG source text",
+                  "description": "Use together with the query parameters, for example format=png&width=256.",
+                  "value": {
+                    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"50\"><rect width=\"100\" height=\"50\" fill=\"#3366cc\"/></svg>"
+                  }
+                },
+                "base64": {
+                  "summary": "A PNG, JPEG or SVG file as base64",
+                  "description": "This example is a 40 x 20 red PNG. With width=64&height=64 it is fitted into the box and comes back as 64 x 32.",
+                  "value": {
+                    "data_base64": "iVBORw0KGgoAAAANSUhEUgAAACgAAAAUCAIAAABwJOjsAAAAe0lEQVR4Ae3AA6AkWZbG8f937o3IzKdyS2Oubdu2bdu2bdu2bWmMnpZKr54yMyLu+Xa3anqmhztr1a+a/xYE/z0I/nsQ/Pcg+O9B8N+D4L8HwX8Pgv8eBP89CP57EPz3IPjvQfDfg+C/B8F/D4L/HgT/PQj+exD89+AfAU0DASroIBCFAAAAAElFTkSuQmCC"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The converted image.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConvertResult" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "413": { "$ref": "#/components/responses/Error" },
+          "415": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" },
+          "504": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/v1/image/convert": {
+      "post": {
+        "operationId": "convertImage",
+        "summary": "Convert or resize an image (raw bytes)",
+        "description": "Same conversion and the same query parameters as convertImageJson, but the request body is the raw image file (SVG, PNG or JPEG) and the response body is the raw converted image. The Content-Type of the request is optional; if given it must match the data. The response carries X-Image-Width and X-Image-Height headers. Clients that cannot handle binary bodies should use convertImageJson instead.",
+        "parameters": [
+          { "$ref": "#/components/parameters/format" },
+          { "$ref": "#/components/parameters/width" },
+          { "$ref": "#/components/parameters/height" },
+          { "$ref": "#/components/parameters/background" },
+          { "$ref": "#/components/parameters/quality" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/svg+xml": { "schema": { "type": "string", "format": "binary" } },
+            "image/png": { "schema": { "type": "string", "format": "binary" } },
+            "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+            "application/octet-stream": { "schema": { "type": "string", "format": "binary" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The converted image.",
+            "headers": {
+              "X-Image-Width": { "description": "Width of the result in pixels.", "schema": { "type": "integer" } },
+              "X-Image-Height": { "description": "Height of the result in pixels.", "schema": { "type": "integer" } }
+            },
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/Error" },
+          "413": { "$ref": "#/components/responses/Error" },
+          "415": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/Error" },
+          "500": { "$ref": "#/components/responses/Error" },
+          "504": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check",
+        "description": "Returns status ok and the service version. No authentication.",
+        "responses": {
+          "200": {
+            "description": "The service is running.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "version": { "type": "string", "example": "0.9.0" }
+                  },
+                  "required": ["status", "version"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "format": {
+        "name": "format",
+        "in": "query",
+        "required": true,
+        "description": "Output format.",
+        "schema": { "type": "string", "enum": ["png", "jpeg"] }
+      },
+      "width": {
+        "name": "width",
+        "in": "query",
+        "required": false,
+        "description": "Output width in pixels. Limited by the server (default maximum 4096). With only width given, the height follows the aspect ratio; with both, the image is fitted inside the box.",
+        "schema": { "type": "integer", "minimum": 1 }
+      },
+      "height": {
+        "name": "height",
+        "in": "query",
+        "required": false,
+        "description": "Output height in pixels. Limited by the server (default maximum 4096). With only height given, the width follows the aspect ratio; with both, the image is fitted inside the box.",
+        "schema": { "type": "integer", "minimum": 1 }
+      },
+      "background": {
+        "name": "background",
+        "in": "query",
+        "required": false,
+        "description": "Background color: 'transparent' (PNG only), #rgb or #rrggbb. JPEG defaults to white; PNG keeps its transparency when omitted. Swagger UI and curl URL-encode the # for you in the browser; in a hand-written URL write it as %23.",
+        "schema": { "type": "string", "example": "#ffffff" }
+      },
+      "quality": {
+        "name": "quality",
+        "in": "query",
+        "required": false,
+        "description": "JPEG quality 1-100 (default 90). Not allowed for PNG.",
+        "schema": { "type": "integer", "minimum": 1, "maximum": 100 }
+      }
+    },
+    "schemas": {
+      "ConvertRequest": {
+        "type": "object",
+        "description": "The image to convert. Provide exactly one of svg or data_base64. The conversion options are query parameters, not part of this body.",
+        "properties": {
+          "svg": { "type": "string", "description": "SVG source text, not encoded. Use this OR data_base64." },
+          "data_base64": {
+            "type": "string",
+            "description": "Base64 of an SVG, PNG or JPEG file (a data: URL prefix is accepted). Use this OR svg."
+          }
+        }
+      },
+      "ConvertResult": {
+        "type": "object",
+        "required": ["format", "content_type", "width", "height", "size_bytes", "data_base64"],
+        "properties": {
+          "format": { "type": "string", "enum": ["png", "jpeg"] },
+          "content_type": { "type": "string", "example": "image/png" },
+          "width": { "type": "integer", "description": "Width of the result in pixels." },
+          "height": { "type": "integer", "description": "Height of the result in pixels." },
+          "size_bytes": { "type": "integer", "description": "Size of the decoded image in bytes." },
+          "data_base64": { "type": "string", "description": "The converted image, base64 encoded." }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error", "message"],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Stable error code, for example invalid_parameter, invalid_svg, invalid_image, unsupported_media_type, format_mismatch, payload_too_large, image_too_large, busy, timeout.",
+            "example": "invalid_svg"
+          },
+          "message": { "type": "string", "example": "SVG input could not be parsed" }
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "The request failed. 400 invalid input or parameter, 413 request too large, 415 unsupported input format, 422 image or output too large, 429 all conversion slots busy (retry), 500 internal error, 504 conversion timed out.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+# Copyright (c) 2026 Daniel Nashed / NashCom
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Test, build image, test image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # Same scripts you run locally. test.sh runs the Rust tests in a
+      # rust:alpine container (fonts included), once with the embedded
+      # Swagger UI and once with the CDN variant. Called through sh so a
+      # missing executable bit in git does not matter.
+      - name: Unit and HTTP tests
+        run: sh ./test.sh
+
+      - name: Build image
+        run: sh ./build.sh
+
+      - name: Container tests (read-only, non-root)
+        run: bash tests/integration_test.sh

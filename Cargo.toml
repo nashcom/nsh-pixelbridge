@@ -1,0 +1,52 @@
+[package]
+name = "nsh-pixelbridge"
+version = "0.9.0"
+edition = "2021"
+description = "PixelBridge: small REST service that converts SVG and raster images to PNG/JPEG"
+license = "Apache-2.0"
+publish = false
+
+[features]
+# Swagger UI at /docs. With "swagger-embed" (default) the UI files are compiled
+# into the binary (docker/fetch_swagger_ui.sh downloads them into ./swagger-ui
+# first). Without it (--no-default-features) /docs loads them from a CDN.
+default = ["swagger-embed"]
+swagger-embed = []
+
+[dependencies]
+# HTTP server. axum sits on tokio/hyper; we use plain HTTP only (TLS is NGINX's job).
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "sync", "time", "fs"] }
+
+# SVG rendering. Default features are off on purpose:
+#   - no "svgz"        : gzip-compressed SVG would open a decompression-bomb door
+#   - no "system-fonts": the scratch image has none; fonts come from PIXELBRIDGE_FONT_DIR
+# "raster-images" is needed for <image> elements with embedded data: URLs.
+resvg = { version = "0.49", default-features = false, features = ["text", "raster-images"] }
+
+# Raster decode/encode and resize. Only the two codecs we offer.
+# fontdb is already pulled in by resvg; naming it here only makes sure its
+# "fs" feature (load_fonts_dir) is on without enabling resvg's system-fonts.
+# Keep the version in step with the fontdb that `cargo tree -i fontdb` shows.
+fontdb = { version = "0.24", default-features = false, features = ["fs"] }
+
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+
+base64 = "0.22"
+bytes = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_urlencoded = "0.7"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+# panic stays "unwind" (the default): a bug in a decoder must only fail that one
+# request (tokio catches the panic in the worker), not kill the whole service.

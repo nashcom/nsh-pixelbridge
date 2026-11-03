@@ -1,0 +1,30 @@
+nsh-pixelbridge
+Copyright 2026 Daniel Nashed / NashCom
+
+This product statically links open source Rust crates. The main ones:
+
+  resvg, usvg                SVG parsing and rendering   (MPL-2.0)
+  tiny-skia                  2D rasterizer               (BSD-3-Clause)
+  image and its codecs       raster decode and encode    (MIT / Apache-2.0)
+  axum, tokio, hyper         HTTP server, async runtime  (MIT)
+  serde, serde_json, base64, tracing                     (MIT / Apache-2.0)
+
+Unless the image is built with SWAGGER_UI=cdn, the binary also contains
+Swagger UI (swagger-ui-dist, Apache-2.0, https://github.com/swagger-api/swagger-ui),
+embedded so that /docs works without internet access.
+
+The exact license of each crate is declared in its own Cargo.toml and
+source package (verify before publishing: `cargo install cargo-license`,
+then `cargo license` in the build container). The complete dependency list
+with versions is in Cargo.lock.
+
+The container image additionally bundles these fonts in /fonts:
+
+  DejaVu Sans, DejaVu Sans Bold, DejaVu Sans Oblique,
+  DejaVu Serif, DejaVu Serif Bold, DejaVu Sans Mono
+  Copyright (c) Bitstream, Inc. and the DejaVu / Tavmjong Bah contributors.
+  Free license (Bitstream Vera license with public-domain DejaVu changes):
+  the fonts may be bundled and redistributed; they may not be sold on their
+  own, and the Bitstream/DejaVu names may not be used for modified fonts.
+  The license text taken from the Alpine font-dejavu package is placed in
+  /fonts/licenses in the image.

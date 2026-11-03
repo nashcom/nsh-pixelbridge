@@ -1,0 +1,54 @@
+services:
+
+  nsh-pixelbridge:
+    build:
+      context: .
+      args:
+        # embed: Swagger UI compiled into the binary (default, works offline)
+        # cdn:   /docs loads Swagger UI from a CDN in the viewer's browser
+        SWAGGER_UI: "${SWAGGER_UI:-embed}"
+    image: nsh-pixelbridge:latest
+    container_name: nsh-pixelbridge
+    hostname: nsh-pixelbridge
+    restart: always
+
+    # Everything the service needs is in the image; nothing is written.
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+    # A conversion is CPU and memory work on untrusted input: cap both.
+    # Keep PIXELBRIDGE_MAX_PIXELS * 4 bytes * MAX_CONCURRENT well below mem_limit.
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 128
+
+    environment:
+      PIXELBRIDGE_LISTEN: "0.0.0.0:8080"
+      PIXELBRIDGE_MAX_REQUEST_BYTES: "${PIXELBRIDGE_MAX_REQUEST_BYTES:-5242880}"
+      PIXELBRIDGE_MAX_DIMENSION: "${PIXELBRIDGE_MAX_DIMENSION:-4096}"
+      PIXELBRIDGE_MAX_PIXELS: "${PIXELBRIDGE_MAX_PIXELS:-16000000}"
+      PIXELBRIDGE_MAX_CONCURRENT: "${PIXELBRIDGE_MAX_CONCURRENT:-4}"
+      PIXELBRIDGE_TIMEOUT_SECONDS: "${PIXELBRIDGE_TIMEOUT_SECONDS:-15}"
+      # Advertised in /openapi.json (set it when an MCP bridge reads the spec):
+      # PIXELBRIDGE_PUBLIC_URL: "https://pixelbridge.example.com"
+      # Testing the API description: serve /openapi.json from a file that is
+      # re-read on every request (edit, reload /docs, no rebuild). Needs the
+      # volume below as well.
+      # PIXELBRIDGE_OPENAPI_FILE: "/openapi.json"
+      RUST_LOG: "${RUST_LOG:-info}"
+
+    # volumes:
+    #   - ./openapi.json:/openapi.json:ro
+
+    # Plain HTTP only: bind to loopback and let NGINX terminate TLS in front.
+    ports:
+      - "127.0.0.1:${PIXELBRIDGE_PORT:-8080}:8080"
+
+    healthcheck:
+      test: ["CMD", "/nsh-pixelbridge", "-health-check"]
+      interval: 60s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

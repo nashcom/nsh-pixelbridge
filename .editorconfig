@@ -1,0 +1,20 @@
+# Editors that understand EditorConfig (VS Code with the extension, JetBrains, vim, ...)
+# save LF line endings and a final newline here.
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.md]
+trim_trailing_whitespace = false

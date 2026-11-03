@@ -1,0 +1,28 @@
+# Build context for the image: only what the Dockerfile COPYs is needed
+# (Cargo.toml, Cargo.lock, openapi.json, src/, docker/, NOTICE, LICENSE).
+# Everything else stays out, so it cannot slow the build or invalidate its cache.
+
+# Build output and the extracted binary
+target
+nsh-pixelbridge
+
+# Fetched inside the build (docker/fetch_swagger_ui.sh), never copied from the host
+swagger-ui
+
+# Local settings and tooling
+.env
+.git
+.github
+.gitignore
+.gitattributes
+.editorconfig
+
+# Not part of the image
+tests
+testdata
+examples
+*.md
+compose.yml
+build.sh
+test.sh
+Makefile

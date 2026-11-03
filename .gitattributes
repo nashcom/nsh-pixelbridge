@@ -1,0 +1,16 @@
+# Every text file is LF, on every platform (scripts and Dockerfiles break with CRLF
+# inside containers). Git converts on commit and checkout, whatever core.autocrlf says.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.rs   text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.md   text eol=lf
+Dockerfile text eol=lf
+
+# Never touched by line-ending conversion
+*.png  binary
+*.jpg  binary
+*.ttf  binary
