@@ -441,7 +441,7 @@ async fn health_openapi_and_unknown_paths() {
     let response = &doc["paths"]["/v1/image/convert"]["post"]["responses"]["200"]["content"]["image/png"]["schema"];
     assert_eq!(response["format"], "binary");
 
-    // Both endpoints list the same five options as separate query parameters
+    // Both endpoints list the same six options as separate query parameters
     // (that is what makes Swagger UI show one input field per option).
     for path in ["/v1/image/convert", "/v1/image/convert-json"] {
         let refs: Vec<&str> = doc["paths"][path]["post"]["parameters"]
@@ -450,9 +450,9 @@ async fn health_openapi_and_unknown_paths() {
             .iter()
             .map(|p| p["$ref"].as_str().unwrap())
             .collect();
-        assert_eq!(refs.len(), 5, "{path}");
+        assert_eq!(refs.len(), 6, "{path}");
     }
-    for name in ["format", "width", "height", "background", "quality"] {
+    for name in ["format", "width", "height", "background", "quality", "color"] {
         assert_eq!(doc["components"]["parameters"][name]["in"], "query", "{name}");
     }
 
