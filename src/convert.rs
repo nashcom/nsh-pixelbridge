@@ -70,6 +70,8 @@ pub struct ConvertOptions {
     pub height: Option<u32>,
     pub background: Option<Background>,
     pub quality: u8,
+    /// Recolor request: every pixel gets this color, transparency is kept.
+    pub color: Option<[u8; 3]>,
 }
 
 impl ConvertOptions {
@@ -80,6 +82,7 @@ impl ConvertOptions {
         height: Option<u32>,
         background: Option<&str>,
         quality: Option<u8>,
+        color: Option<&str>,
     ) -> Result<ConvertOptions, ApiError> {
         let format = OutputFormat::parse(format.ok_or_else(|| ApiError::invalid_parameter("format is required (png or jpeg)"))?)?;
 
@@ -100,7 +103,15 @@ impl ConvertOptions {
             return Err(ApiError::invalid_parameter("quality must be between 1 and 100"));
         }
 
-        Ok(ConvertOptions { format, width, height, background, quality })
+        let color = match color {
+            None => None,
+            Some(text) => match parse_background(text) {
+                Ok(Background::Color(c)) => Some(c),
+                _ => return Err(ApiError::invalid_parameter("color must be #rgb or #rrggbb")),
+            },
+        };
+
+        Ok(ConvertOptions { format, width, height, background, quality, color })
     }
 }
 
@@ -174,12 +185,26 @@ pub fn convert(
 ) -> Result<Converted, ApiError> {
     let kind = sniff(input).ok_or_else(|| ApiError::unsupported_media_type("input must be SVG, PNG or JPEG"))?;
 
-    let image = match kind {
+    let mut image = match kind {
         InputKind::Svg => render_svg(input, opts, limits, fonts)?,
         InputKind::Png => decode_raster(input, ImageFormat::Png, opts, limits)?,
         InputKind::Jpeg => decode_raster(input, ImageFormat::Jpeg, opts, limits)?,
     };
+    if let Some(color) = opts.color {
+        recolor(&mut image, color);
+    }
     encode(&image, opts)
+}
+
+/// Gives every pixel the same color and keeps its transparency. A black logo
+/// on a transparent background becomes a white logo, smooth edges included.
+/// (Multi-color artwork turns into a one-color silhouette.)
+fn recolor(img: &mut RgbaImage, color: [u8; 3]) {
+    for p in img.pixels_mut() {
+        p.0[0] = color[0];
+        p.0[1] = color[1];
+        p.0[2] = color[2];
+    }
 }
 
 /// Output size policy (see README):
@@ -439,14 +464,30 @@ mod tests {
 
     #[test]
     fn option_validation() {
-        assert!(ConvertOptions::new(Some("png"), None, None, None, None).is_ok());
-        assert!(ConvertOptions::new(None, None, None, None, None).is_err());
-        assert!(ConvertOptions::new(Some("gif"), None, None, None, None).is_err());
-        assert!(ConvertOptions::new(Some("png"), Some(0), None, None, None).is_err());
-        assert!(ConvertOptions::new(Some("png"), None, None, None, Some(80)).is_err()); // quality is jpeg-only
-        assert!(ConvertOptions::new(Some("jpeg"), None, None, None, Some(0)).is_err());
-        assert!(ConvertOptions::new(Some("jpeg"), None, None, Some("transparent"), None).is_err());
-        assert!(ConvertOptions::new(Some("jpeg"), None, None, Some("#000"), Some(75)).is_ok());
+        assert!(ConvertOptions::new(Some("png"), None, None, None, None, None).is_ok());
+        assert!(ConvertOptions::new(None, None, None, None, None, None).is_err());
+        assert!(ConvertOptions::new(Some("gif"), None, None, None, None, None).is_err());
+        assert!(ConvertOptions::new(Some("png"), Some(0), None, None, None, None).is_err());
+        assert!(ConvertOptions::new(Some("png"), None, None, None, Some(80), None).is_err()); // quality is jpeg-only
+        assert!(ConvertOptions::new(Some("jpeg"), None, None, None, Some(0), None).is_err());
+        assert!(ConvertOptions::new(Some("jpeg"), None, None, Some("transparent"), None, None).is_err());
+        assert!(ConvertOptions::new(Some("jpeg"), None, None, Some("#000"), Some(75), None).is_ok());
+        // color: #rgb / #rrggbb only
+        let ok = ConvertOptions::new(Some("png"), None, None, None, None, Some("#fff")).unwrap();
+        assert_eq!(ok.color, Some([255, 255, 255]));
+        for bad in ["transparent", "white", "#ff", ""] {
+            assert!(ConvertOptions::new(Some("png"), None, None, None, None, Some(bad)).is_err(), "{bad}");
+        }
+    }
+
+    #[test]
+    fn recolor_keeps_alpha() {
+        let mut img = RgbaImage::new(2, 1);
+        img.put_pixel(0, 0, image::Rgba([0, 0, 0, 255])); // opaque black
+        img.put_pixel(1, 0, image::Rgba([0, 0, 0, 100])); // soft edge
+        recolor(&mut img, [255, 255, 255]);
+        assert_eq!(img.get_pixel(0, 0).0, [255, 255, 255, 255]);
+        assert_eq!(img.get_pixel(1, 0).0, [255, 255, 255, 100]);
     }
 
     #[test]

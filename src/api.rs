@@ -147,6 +147,7 @@ struct ConvertParams {
     height: Option<u32>,
     background: Option<String>,
     quality: Option<u8>,
+    color: Option<String>,
 }
 
 fn options_from_query(query: Option<&str>) -> Result<ConvertOptions, ApiError> {
@@ -158,6 +159,7 @@ fn options_from_query(query: Option<&str>) -> Result<ConvertOptions, ApiError> {
         params.height,
         params.background.as_deref(),
         params.quality,
+        params.color.as_deref(),
     )
 }
 
@@ -327,6 +329,9 @@ async fn run_conversion(
         match opts.background {
             Some(convert::Background::Transparent) => " background=transparent".to_string(),
             Some(convert::Background::Color([r, g, b])) => format!(" background=#{r:02x}{g:02x}{b:02x}"),
+            None => String::new(),
+        } + &match opts.color {
+            Some([r, g, b]) => format!(" color=#{r:02x}{g:02x}{b:02x}"),
             None => String::new(),
         }
     );

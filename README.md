@@ -139,7 +139,7 @@ Swagger UI.
 
 ### Conversion options
 
-The **same five options** are **query parameters on both conversion endpoints**
+The **same six options** are **query parameters on both conversion endpoints**
 (which is also why Swagger UI shows them as separate input fields):
 
 | Option       | Values                           | Notes                                          |
@@ -149,7 +149,14 @@ The **same five options** are **query parameters on both conversion endpoints**
 | `height`     | 1 up to the configured maximum   | Pixels; see [sizing](#sizing)                  |
 | `background` | `transparent`, `#rgb`, `#rrggbb` | PNG keeps transparency; JPEG defaults to white |
 | `quality`    | 1 to 100 (default 90)            | JPEG only; refused for PNG                     |
+| `color`      | `#rgb`, `#rrggbb`                | Recolors the artwork, keeps transparency       |
 
+- `color` gives every pixel the same color and keeps its transparency, so a
+  black logo becomes a white one, soft edges included
+  (`...?format=png&color=%23ffffff`). Multi-color artwork turns into a
+  one-color silhouette, and an image without transparency (a JPEG, a PNG with
+  an opaque background) becomes a solid rectangle. For JPEG output combine it
+  with `background`, for example white logo on a dark blue background.
 - `transparent` is refused for JPEG, which has no transparency.
 - In a hand-written URL write `#` as `%23` (Swagger UI does this for you).
 - Unknown parameters are errors, so a typo such as `widht=100` cannot go

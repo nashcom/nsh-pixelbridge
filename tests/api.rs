@@ -170,6 +170,28 @@ async fn background_color_is_applied() {
     assert!(corner[0] < 5 && corner[1] < 5 && corner[2] < 5, "corner is {corner:?}, expected black");
 }
 
+#[tokio::test]
+async fn color_recolors_and_keeps_transparency() {
+    let (_, plain) = convert_ok("format=png", TRANSPARENT_SVG).await;
+    let (_, white) = convert_ok("format=png&color=%23ffffff", TRANSPARENT_SVG).await;
+    let (plain, white) = (decode(&plain), decode(&white));
+    assert_eq!(plain.dimensions(), white.dimensions());
+
+    let mut visible = 0;
+    for (a, b) in plain.pixels().zip(white.pixels()) {
+        assert_eq!(a.0[3], b.0[3], "alpha must not change");
+        if b.0[3] > 0 {
+            visible += 1;
+            assert_eq!(&b.0[..3], &[255, 255, 255], "visible pixels must be white");
+        }
+    }
+    assert!(visible > 0, "test image has no visible pixels");
+
+    // wrong value
+    let (status, _, body) = call(&state(), post_binary("format=png&color=red", Some("image/svg+xml"), SIMPLE_SVG)).await;
+    assert_eq!((status, error_code(&body).as_str()), (StatusCode::BAD_REQUEST, "invalid_parameter"));
+}
+
 // ------------------------------------------------------------ raster input
 
 #[tokio::test]

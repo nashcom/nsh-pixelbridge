@@ -16,7 +16,8 @@
           { "$ref": "#/components/parameters/width" },
           { "$ref": "#/components/parameters/height" },
           { "$ref": "#/components/parameters/background" },
-          { "$ref": "#/components/parameters/quality" }
+          { "$ref": "#/components/parameters/quality" },
+          { "$ref": "#/components/parameters/color" }
         ],
         "requestBody": {
           "required": true,
@@ -71,7 +72,8 @@
           { "$ref": "#/components/parameters/width" },
           { "$ref": "#/components/parameters/height" },
           { "$ref": "#/components/parameters/background" },
-          { "$ref": "#/components/parameters/quality" }
+          { "$ref": "#/components/parameters/quality" },
+          { "$ref": "#/components/parameters/color" }
         ],
         "requestBody": {
           "required": true,
@@ -165,6 +167,13 @@
         "required": false,
         "description": "JPEG quality 1-100 (default 90). Not allowed for PNG.",
         "schema": { "type": "integer", "minimum": 1, "maximum": 100 }
+      },
+      "color": {
+        "name": "color",
+        "in": "query",
+        "required": false,
+        "description": "Recolor: every pixel gets this color (#rgb or #rrggbb, write # as %23 in a hand-written URL) and keeps its transparency. Turns a black logo into a white one, edges included. Multi-color artwork becomes a one-color silhouette. Needs transparency in the source (SVG without background, PNG with alpha); an opaque image becomes a solid rectangle. Combine with background for JPEG output.",
+        "schema": { "type": "string", "example": "#ffffff" }
       }
     },
     "schemas": {
